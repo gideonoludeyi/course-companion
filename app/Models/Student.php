@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property Collection<int, Course> eligibleMajorCourses
  * @property Collection<int, Course> completedCoursesV2
  * @property Collection<int, Course> eligibleElectiveMajorCourses
+ * @property Collection<int, Course> eligibleElectiveCourses
  */
 class Student extends Model
 {
@@ -72,6 +73,15 @@ class Student extends Model
         }
     }
 
+    public function markAsNoLongerEligibleForElectiveCourse(Course $course): void
+    {
+        $this->eligibleElectiveCourses()->detach($course);
+        // TODO: remove the following once 'eligible_courses_elective_courses' table is gone
+        if (isset($student->eligibleCoursesElective)) {
+            $course->eligibleCoursesElective()->detach($student->eligibleCoursesElective);
+        }
+    }
+
     public function markAsEligibleForConcentrationCourse(Course $course): void
     {
         /* `syncWithoutDetaching` works similar to `attach`
@@ -100,7 +110,17 @@ class Student extends Model
          * which is what we want */
         $this->eligibleElectiveMajorCourses()->syncWithoutDetaching($course);
         // TODO: remove the following once 'eligible_courses_elective_major_courses' table is gone
-        $course->eligibleElectiveMajorStudents()->attach($this->eligibleCoursesMajor);
+        $course->eligibleCoursesElectiveMajor()->attach($this->eligibleCoursesMajor);
+    }
+
+    public function markAsEligibleForElectiveCourse(Course $course): void
+    {
+        /* `syncWithoutDetaching` works similar to `attach`
+         * but doesn't raise an exception when the record already exists
+         * which is what we want */
+        $this->eligibleElectiveCourses()->syncWithoutDetaching($course);
+        // TODO: remove the following once 'eligible_courses_elective_courses' table is gone
+        $course->eligibleCoursesElective()->attach($this->eligibleCoursesElective);
     }
 
     public function fillChildren(): void
@@ -193,9 +213,18 @@ class Student extends Model
         return $this->hasOne(EligibleCoursesContext::class);
     }
 
+    /**
+     * TODO: remove once 'eligible_courses_elective_courses' table is gone
+     * @deprecated use {@link self::eligibleElectiveCourses()} instead
+     */
     public function EligibleCoursesElective(): hasOne
     {
         return $this->hasOne(EligibleCoursesElective::class);
+    }
+
+    public function eligibleElectiveCourses(): BelongsToMany
+    {
+        return $this->belongsToMany(Course::class, 'eligible_elective_courses');
     }
 
 }

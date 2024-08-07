@@ -280,7 +280,7 @@ class StudentController extends Controller
                     if (substr($course->code, 0, 4) == $student->major) {
                         $student->markAsEligibleForElectiveMajorCourse($course);
                     } else {
-                        $this->createRelatedCourseRecord($student, "Elective", $course->code);
+                        $student->markAsEligibleForElectiveCourse($course);
                     }
                 }
             }
@@ -328,9 +328,7 @@ class StudentController extends Controller
                 $course->eligibleCoursesContext()->detach($student->eligibleCoursesContext);
             }
             */
-            if (isset($student->eligibleCoursesElective)) {
-                $course->eligibleCoursesElective()->detach($student->eligibleCoursesElective);
-            }
+            $student->markAsNoLongerEligibleForElectiveCourse($course);
         }
     }
 
@@ -376,15 +374,14 @@ class StudentController extends Controller
         } elseif ($type == "Context") {
             $sc = $student->eligibleCoursesContext;
         } elseif ($type == "Elective") {
-            $sc = $student->eligibleCoursesElective;
+            /* DEPRECATED: use Student::markAsEligibleForElectiveCourse instead */
+            return;
         }
 
         // add the course if it hasn't been added already
         if (!$this->relatedCourseRecordExists($sc, $course)) {
             if ($type == "Context") {
                 $course->EligibleCoursesContext()->attach($sc);
-            } elseif ($type == "Elective") {
-                $course->EligibleCoursesElective()->attach($sc);
             }
         }
     }

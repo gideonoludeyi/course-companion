@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property ?string prereqs
  * @property Collection<int, Student> eligibleConcentrationStudents
  * @property Collection<int, Student> eligibleMajorStudents
+ * @property Collection<int, Student> eligibleElectiveStudents
  * @property Collection<int, Student> completedStudents
  */
 class Course extends Model
@@ -109,9 +110,18 @@ class Course extends Model
         return $this->belongsToMany(Student::class, 'eligible_elective_major_courses');
     }
 
+    /**
+     * TODO: remove once 'eligible_courses_elective_major_courses' table is gone
+     * @deprecated use {@link self::eligibleElectiveStudents()}
+     */
     public function EligibleCoursesElective(): BelongsToMany
     {
         return $this->BelongsToMany(EligibleCoursesElective::class, 'eligible_courses_elective_courses');
+    }
+
+    public function eligibleElectiveStudents(): BelongsToMany
+    {
+        return $this->belongsToMany(Student::class, 'eligible_elective_courses');
     }
 
     public function CourseFeedback(): HasMany

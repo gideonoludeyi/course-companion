@@ -139,7 +139,7 @@
         <div class = "mt-4">
             <p class="font-bold">Eligible Non-Major Elective Courses</p>
         <div class="p-2 h-40 overflow-y-auto bg-white border border-gray-300 block w-full focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm">
-            @foreach($student->eligibleCoursesElective->course as $courseCompleted)
+            @foreach($student->eligibleElectiveCourses as $courseCompleted)
                 <div class="tooltip-container">
                     {{ $courseCompleted->code }}: {{$courseCompleted->name}}
                     @if($courseCompleted->minimumGrade)

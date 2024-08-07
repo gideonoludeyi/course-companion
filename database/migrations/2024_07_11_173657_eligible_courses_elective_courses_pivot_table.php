@@ -1,16 +1,11 @@
 <?php
 
-use App\Models\CompletedCourses;
 use App\Models\Course;
-use App\Models\EligibleCoursesElective;
-use App\Models\EligibleCoursesMajor;
-use App\Models\Student;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -19,7 +14,8 @@ return new class extends Migration
         Schema::create('eligible_courses_elective_courses', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(Course::class);
-            $table->foreignIdFor(EligibleCoursesElective::class);
+            $table->foreignId('eligible_courses_elective_id')
+                ->constrained('eligible_courses_electives');
             $table->timestamps();
         });
     }
