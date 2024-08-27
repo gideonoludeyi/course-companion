@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property int id
@@ -15,11 +16,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string name
  * @property string duration
  * @property ?string isRequiredByMajor the major that this course is required by (eg. COSC)
- * @property ?string concentration
+ * @property ?array<int, string> concentration e.g. [ "Software Engineering", "Artificial Intelligence" ]
  * @property ?int minimumGrade
  * @property int prereqCreditCount
  * @property int prereqCreditCountMajor
- * @property ?string prereqs
+ * @property ?array<string, string> prereqs e.g. [ "COSC 1P02" => "Introduction to Computer Science" ]
+ * @property Collection<int, CourseGroup> prerequisites
  * @property Collection<int, Student> eligibleConcentrationStudents
  * @property Collection<int, Student> eligibleMajorStudents
  * @property Collection<int, Student> eligibleElectiveStudents
@@ -48,6 +50,45 @@ class Course extends Model
             'prereqs' => 'array',
             'concentration' => 'array',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $course) {
+            DB::transaction(function () use ($course) {
+                Course::whereIn('code', array_keys($course->prereqs ?? []))
+                    ->each(fn($c) => $course->addPrerequisiteChoices([$c]));
+            });
+        });
+    }
+
+    /**
+     * add the courses as prerequisite choices
+     * such that only one of the choices is required to satisfy the prerequisite
+     *
+     * For example, with
+     * ```
+     * $course->addPrerequisiteChoices([$cosc1p50, $cosc1p71]);
+     * ```
+     * only one of `$cosc1p50` or `$cosc1p71` is required to satisfy the prerequisite.
+     *
+     * To require all courses to be required, add them individually
+     * ```
+     * foreach ($prerequisites as $prereq)
+     *     $course->addPrerequisiteChoices([$prereq]);
+     * ```
+     *
+     * @param array<int, Course>|\Illuminate\Support\Collection<int, Course> ...$choices
+     * @return void
+     */
+    private function addPrerequisiteChoices(array|\Illuminate\Support\Collection $choices): void
+    {
+        DB::transaction(fn() => $this->prerequisites()->save(CourseGroup::for($choices)));
+    }
+
+    public function prerequisites(): BelongsToMany
+    {
+        return $this->belongsToMany(CourseGroup::class, table: 'courses_to_prerequisites', relatedPivotKey: 'prerequisite_id');
     }
 
     public function User(): BelongsTo
