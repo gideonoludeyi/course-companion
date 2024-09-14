@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\student>
@@ -21,7 +20,7 @@ class StudentFactory extends Factory
         return [
             'user_id' => 1,
             'name' => $this->faker->name(),
-            'number' => $this->faker->unique()->randomNumber(7),
+            'number' => $this->faker->unique()->randomNumber(nbDigits: 7, strict: true),
             'major' => "COSC",
             'creditsCompleted' => 0,
             'creditsCompletedMajor' => 0,

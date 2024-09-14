@@ -11,7 +11,7 @@ it('displays all courses', function () {
     $response = actingAs($user)
         ->get(route('courses.index'));
 
-    $response->assertStatus(200);
+    $response->assertOk();
     $response->assertViewIs('courses.index');
     $response->assertViewHas('courses', Course::all());
 });
@@ -24,7 +24,7 @@ it('displays a course with the given id', function () {
     $response = actingAs($user)
         ->get(route('courses.show', $course->id));
 
-    $response->assertStatus(200);
+    $response->assertOk();
     $response->assertViewIs('courses.show');
     $response->assertViewHas('course', $course);
 });
@@ -37,7 +37,7 @@ it('displays a course with the given code', function () {
     $response = actingAs($user)
         ->get(route('courses.findCourse', ['code' => $course->code]));
 
-    $response->assertStatus(200);
+    $response->assertOk();
     $response->assertViewIs('courses.show');
     $response->assertViewHas('course', $course);
 });
@@ -55,7 +55,7 @@ it('fails to create course for non-advisor', function () {
     $response = actingAs($user)
         ->post(route('courses.store'), $data);
 
-    $response->assertStatus(403);
+    $response->assertForbidden();
 });
 
 it('creates a course for advisor', function () {
@@ -71,7 +71,7 @@ it('creates a course for advisor', function () {
     $response = actingAs($user)
         ->post(route('courses.store'), $data);
 
-    $response->assertStatus(302);
+    $response->assertRedirect();
     $this->assertDatabaseCount('courses', 1);
     $this->assertDatabaseHas('courses', $data);
 });
@@ -93,7 +93,7 @@ it('fails to update course created by another user', function () {
             'duration' => 'D2',
         ]);
 
-    $response->assertStatus(403);
+    $response->assertForbidden();
 });
 
 it('updates course for advisor', function () {
@@ -114,7 +114,6 @@ it('updates course for advisor', function () {
             'duration' => 'D2',
         ]);
 
-    $response->assertStatus(302);
     $response->assertRedirectToRoute('courses.index');
 });
 
@@ -130,7 +129,6 @@ it('deletes a course with the given id', function () {
     $response = actingAs($user)
         ->delete(route('courses.destroy', $course));
 
-    $response->assertStatus(302);
     $response->assertRedirectToRoute('courses.index');
-    $this->assertDatabaseCount('courses', 0);
+    $this->assertModelMissing($course);
 });
